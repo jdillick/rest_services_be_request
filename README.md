@@ -1,11 +1,17 @@
 # REST Services BE Request
 
-This module provides a callback function rest_request() to obtain a JSON response from the services
-module rest_server.
+This Drupal 7 module provides a callback function rest_request() to obtain a JSON response from the services module rest_server.
 
-This is useful when you wish to add JSON inline on a page from a preprocessor, and
-you would like that JSON to be provided by services. This result is provided directly from the rest_server,
+This is useful when you wish to add JSON inline on a page from a preprocessor, and you would like that JSON to be provided by services. This result is provided directly from the rest_server,
 without making a network request.
+
+## Dependencies
+Drupal core 7.x
+services
+rest_server
+
+## Setup
+Make sure you have services module and rest_server module installed and enabled, and have at least setup your JSON endpoint and desired resources in services module before using this module.
 
 ## Examples:
 
