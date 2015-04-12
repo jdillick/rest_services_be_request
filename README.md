@@ -31,7 +31,7 @@ If you have a term resource (requires POST):
 
 **http://localhost/api/term/selectNodes**
 
-This requiest could be made by:
+This request could be made by:
 
 ```
 $data = array('request_body' => '{"tid": 14, "limit": 10}');
