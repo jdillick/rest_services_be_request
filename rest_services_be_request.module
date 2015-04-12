@@ -1,0 +1,161 @@
+<?php
+/**
+ * @file rest_services_be_request
+ *
+ * This module provides a callback function rest_request() to obtain a JSON response from the services
+ * module rest_server. This is useful when you wish to add JSON inline on a page from a preprocessor, and
+ * you would like that JSON to be provided by services. This result is provided directly from the rest_server,
+ * without making a network request.
+ *
+ * Examples:
+ *
+ * If you have a services endpoint /api and are providing a JSON response on the node resource:
+ *
+ * http://localhost/api/node/1
+ *
+ * This request could be made by:
+ * $data = array();
+ * $json = rest_request('api/node/1', $data); // Get is default
+ *
+ * If you have a term resource (requires POST):
+ *
+ * http://localhost/api/term/selectNodes
+ *
+ * This requiest could be made by:
+ * $data = array('request_body' => '{"tid": 14, "limit": 10}');
+ * $json = rest_request('api/term/selectNodes', $data, 'POST');
+ * // alternativiely
+ * $data = array('post' => array('tid'=> 14, 'limit' => 10,));
+ * $json = rest_request('api/term/selectNodes', $data, 'POST');
+ *
+ * Or to get a list of taxonomy terms:
+ *
+ * http://localhost/api/term
+ * $data = array('get' => array('vid' => 1));
+ * $json = rest_request('api/term/term', $data);
+ */
+namespace {
+
+  module_load_include('inc', 'services', 'includes/services.runtime');
+  module_load_include('inc', 'services', 'servers/rest_server/includes/ServicesContentTypeNegotiator');
+  module_load_include('inc', 'services', 'servers/rest_server/includes/ServicesContext');
+  module_load_include('inc', 'services', 'servers/rest_server/includes/ServicesFormatter');
+  module_load_include('inc', 'services', 'servers/rest_server/includes/ServicesParser');
+  module_load_include('inc', 'services', 'servers/rest_server/includes/RESTServer');
+
+  /**
+   * Make a services module rest_server request. (JSON only)
+   *
+   * @param  string $endpoint the full endpoint path (not just the services endpoint prefix)
+   * @param  array  $data     the get or post parameters
+   * @param  string $method   (optional) GET or POST
+   * @return string           JSON response
+   */
+  function rest_request($endpoint, $data = array(), $method = 'GET') {
+    try {
+      return Drupal\rest_services_be_request\server_factory($endpoint, $data, $method)->handle();
+    } catch (Exception $e) {
+      watchdog_exception(__FILE__, $e);
+    }
+    return '';
+  }
+}
+
+namespace Drupal\rest_services_be_request {
+
+  use \ServicesContentTypeNegotiator;
+  use \ServicesContext;
+  use \ServicesFormatter;
+  use \ServicesParser;
+  use \RESTServer;
+  require 'BEServicesContext.php';
+
+  /**
+   * Build a RESTServer object from request.
+   *
+   * @param  string $endpoint the full endpoint path (not just the services endpoint prefix)
+   * @param  array  $data     the get or post parameters
+   * @param  string $method   (optional) GET or POST
+   * @return string           JSON response
+   */
+  function server_factory($endpoint, $data = array(), $method = 'GET') {
+    $services_endpoint = services_endpoint($endpoint);
+
+    $context = new BEServicesContext(
+      services_request($endpoint,
+      $data,
+      $method
+    ), $services_endpoint, $method);
+
+    $negotiator = new ServicesContentTypeNegotiator;
+
+    $resources = services_get_resources($services_endpoint);
+
+    $parser = array('application/json' => 'ServicesParserJSON');
+
+    $formatter = array(
+      'json' => array(
+        'mime types' => array(
+          'application/json',
+        ),
+        'formatter class' => 'ServicesJSONFormatter',
+      ),
+      'jsonp' => array(
+        'mime types' => array(
+          'text/javascript',
+          'application/json',
+        ),
+        'formatter class' => 'ServicesJSONPFormatter',
+      ),
+    );
+
+    return new RESTServer($context, $negotiator, $resources, $parser, $formatter);
+  }
+
+  /**
+   * Get the services endpoint prefix from full endpoint.
+   * @param  string $endpoint the complete endpoint URI
+   * @return string           the services endpoint prefix
+   */
+  function services_endpoint($endpoint) {
+    $endpoint = ltrim(trim($endpoint), '/');
+    return explode('/', $endpoint)[0];
+  }
+
+  /**
+   * Build request array needed for context object.
+   * @param  string $endpoint the rest service endpoint
+   * @param  array  $data     request parameters array
+   * @param  string $method   (optional) default GET. Can be GET, POST, or PUT (Put not supported ATM)
+   * @return array           request array for context object
+   */
+  function services_request($endpoint, $data = array(), $method = 'GET') {
+    $request = array(
+      'get' => array('q' => $endpoint),
+      'post' => array(),
+      'server' => array(
+        // required for POST/PUT
+        'CONTENT_TYPE' => 'application/json',
+      ),
+      'request_body' => array(),
+    );
+
+    if ( $method === 'GET' ) {
+      if ( is_array($data['get']) ) {
+        $request['get'] = array_merge($data['get'], $request['get']);
+      }
+
+    // POST/PUT (POST only really supported ATM)
+    } else {
+      if ( isset($data['post']) && is_array($data['post']) ) {
+        $request['request_body'] = json_encode($data['post']);
+        $request['post'] = array_merge($data['post'], $request['post']);
+      } else if ( isset($data['request_body']) ) {
+        $request['request_body'] = $request_body;
+      }
+    }
+
+    return $request;
+  }
+
+}
