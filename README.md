@@ -24,8 +24,7 @@ If you have a services endpoint /api and are providing a JSON response on the no
 This request could be made by:
 
 ```
-$data = array();
-$json = rest_request('api/node/1', $data); // Get is default
+$json = rest_request('api/node/1'); // Get is default
 ```
 
 If you have a term resource (requires POST):
