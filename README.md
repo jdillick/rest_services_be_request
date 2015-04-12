@@ -6,9 +6,11 @@ This is useful when you wish to add JSON inline on a page from a preprocessor, a
 without making a network request.
 
 ## Dependencies
-Drupal core 7.x
-services
-rest_server
+
+* Drupal core 7.x
+* services
+* rest_server
+* php 5.3+
 
 ## Setup
 Make sure you have services module and rest_server module installed and enabled, and have at least setup your JSON endpoint and desired resources in services module before using this module.

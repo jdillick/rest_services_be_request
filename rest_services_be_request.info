@@ -1,7 +1,7 @@
 name = REST Services Backend Request
 description = Provides function for making backend calls to the services REST server.
 core = 7.x
-php = 5.4
+php = 5.3
 
 dependencies[] = services
 dependencies[] = rest_server

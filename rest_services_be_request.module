@@ -119,7 +119,8 @@ namespace Drupal\rest_services_be_request {
    */
   function services_endpoint($endpoint) {
     $endpoint = ltrim(trim($endpoint), '/');
-    return explode('/', $endpoint)[0];
+    $endpoint_parts = explode('/', $endpoint);
+    return $endpoint_parts[0];
   }
 
   /**
