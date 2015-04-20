@@ -53,6 +53,8 @@ namespace {
    */
   function rest_request($endpoint, $data = array(), $method = 'GET') {
     try {
+      $info = services_server_info_object();
+      $info->debug = FALSE;
       return Drupal\rest_services_be_request\server_factory($endpoint, $data, $method)->handle();
     } catch (Exception $e) {
       watchdog_exception(__FILE__, $e);
@@ -96,14 +98,13 @@ namespace Drupal\rest_services_be_request {
     $formatter = array(
       'json' => array(
         'mime types' => array(
-          'application/json',
+          'text/html',
         ),
         'formatter class' => 'ServicesJSONFormatter',
       ),
       'jsonp' => array(
         'mime types' => array(
-          'text/javascript',
-          'application/json',
+          'text/html',
         ),
         'formatter class' => 'ServicesJSONPFormatter',
       ),
@@ -142,7 +143,7 @@ namespace Drupal\rest_services_be_request {
     );
 
     if ( $method === 'GET' ) {
-      if ( is_array($data['get']) ) {
+      if ( isset($data['get']) && is_array($data['get']) ) {
         $request['get'] = array_merge($data['get'], $request['get']);
       }
 
